@@ -1,1 +1,1 @@
-﻿date,periods,mae_yen_kwh,rmse_yen_kwh,bias_yen_kwh
+﻿date,periods,mae_yen_kwh,rmse_yen_kwh,bias_yen_kwh,tepco_mae_yen_kwh,tepco_rmse_yen_kwh,tepco_bias_yen_kwh,winner

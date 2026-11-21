@@ -1,5 +1,10 @@
 {
   "evaluated_days": 0,
-  "average_daily_mae_yen_kwh": null,
+  "compared_days": 0,
+  "baseline_wins": 0,
+  "tepco_wins": 0,
+  "ties": 0,
+  "average_baseline_mae_yen_kwh": null,
+  "average_tepco_mae_yen_kwh": null,
   "daily_results": []
 }
