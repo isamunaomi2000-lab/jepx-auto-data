@@ -1,0 +1,34 @@
+name: JEPX Daily Prediction
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '15 23 * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  predict:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Predict JEPX prices
+        run: python scripts/predict_jepx.py
+
+      - name: Commit prediction
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/predictions/
+          if ! git diff --cached --quiet; then
+            git commit -m "Update JEPX daily prediction"
+            git push
+          fi
