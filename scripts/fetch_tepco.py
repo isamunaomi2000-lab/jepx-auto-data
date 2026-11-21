@@ -56,3 +56,20 @@ for label, filename in SOURCES.items():
 )
 if any(item["status"] == "error" for item in results.values()):
     raise SystemExit(1)
+
+# Save dated snapshots for historical analysis
+HISTORY = OUTPUT / "history"
+HISTORY.mkdir(parents=True, exist_ok=True)
+
+for label in SOURCES:
+    if results[label]["status"] != "ok":
+        continue
+    latest = OUTPUT / (label + "_latest.csv")
+    with latest.open("r", encoding="cp932") as file:
+        metadata = list(csv.reader(file))[:2]
+    target_date = metadata[1][2]
+    if not (len(target_date) == 8 and target_date.isdigit()):
+        raise ValueError("Invalid forecast target date")
+    snapshot = HISTORY / f"{target_date}_{label}_{now.strftime('%Y%m%d_%H%M%S')}.csv"
+    snapshot.write_bytes(latest.read_bytes())
+    print(f"Saved historical snapshot: {snapshot}")
