@@ -5,11 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>JEPX 東京エリア価格予測</title>
 <style>
+* { box-sizing: border-box; }
 body {
   font-family: sans-serif;
   background: #f3f6fa;
   padding: 20px;
   text-align: center;
+  color: #1e293b;
 }
 main {
   max-width: 650px;
@@ -18,9 +20,9 @@ main {
   background: white;
   border-radius: 16px;
 }
-a {
+a.button {
   display: block;
-  padding: 16px;
+  padding: 17px 12px;
   margin-top: 15px;
   color: white;
   border-radius: 10px;
@@ -29,22 +31,33 @@ a {
 }
 .blue { background: #2563eb; }
 .green { background: #16a34a; }
-.hidden { display: none; }
+.orange { background: #ea580c; }
+.hidden { display: none !important; }
+.note { color: #64748b; font-size: 13px; }
 </style>
 </head>
 <body>
 <main>
 <h1>JEPX 東京エリア価格予測</h1>
-<p>最新の予測グラフを確認できます。</p>
+<p>最新の価格予測と予測精度を確認できます。</p>
 <p id="status">最新データを確認中...</p>
 
-<a id="base" class="blue hidden" href="#">
+<a id="base" class="button blue hidden" href="#">
 従来予測グラフを見る
 </a>
 
-<a id="comparison" class="green hidden" href="#">
+<a id="comparison" class="button green hidden" href="#">
 東電PG連動・3本比較グラフを見る
 </a>
+
+<a class="button orange" href="accuracy.html">
+予測精度・勝敗を見る
+</a>
+
+<p class="note">
+実績価格は公開後に反映されます。<br>
+東電PG連動予測は試験モデルです。
+</p>
 </main>
 
 <script>
@@ -80,9 +93,7 @@ async function findLatest(folder) {
         cache: "no-store"
       });
 
-      if (response.ok) {
-        return { date, url };
-      }
+      if (response.ok) return url;
     } catch (error) {
       console.log("Checking:", url);
     }
@@ -91,30 +102,27 @@ async function findLatest(folder) {
 }
 
 async function main() {
-  const status = document.getElementById("status");
-
   const [base, comparison] = await Promise.all([
     findLatest("data/charts"),
     findLatest("data/comparison")
   ]);
 
   if (base) {
-    const button = document.getElementById("base");
-    button.href = base.url;
-    button.classList.remove("hidden");
+    const link = document.getElementById("base");
+    link.href = base;
+    link.classList.remove("hidden");
   }
 
   if (comparison) {
-    const button = document.getElementById("comparison");
-    button.href = comparison.url;
-    button.classList.remove("hidden");
+    const link = document.getElementById("comparison");
+    link.href = comparison;
+    link.classList.remove("hidden");
   }
 
-  if (base || comparison) {
-    status.textContent = "最新のグラフを表示できます";
-  } else {
-    status.textContent = "グラフは現在準備中です";
-  }
+  document.getElementById("status").textContent =
+    base || comparison
+      ? "最新のグラフを表示できます"
+      : "グラフは現在準備中です";
 }
 
 main();
