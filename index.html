@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JEPX 東京エリア価格予測</title>
+<style>
+body {
+  font-family: sans-serif;
+  background: #f3f6fa;
+  padding: 20px;
+  text-align: center;
+}
+main {
+  max-width: 650px;
+  margin: 30px auto;
+  padding: 25px;
+  background: white;
+  border-radius: 16px;
+}
+a {
+  display: block;
+  padding: 15px;
+  margin-top: 20px;
+  background: #1769e0;
+  color: white;
+  border-radius: 10px;
+  text-decoration: none;
+}
+</style>
+</head>
+<body>
+<main>
+<h1>JEPX 東京エリア価格予測</h1>
+<p>最新の予測価格と実績価格を確認できます。</p>
+<p id="status">最新データを確認中...</p>
+<a id="chart" href="#">最新グラフを開く</a>
+</main>
+<script>
+(async function () {
+  const status = document.getElementById("status");
+  const link = document.getElementById("chart");
+  const now = new Date();
+  const japan = new Date(now.toLocaleString("en-US", {
+    timeZone: "Asia/Tokyo"
+  }));
+
+  for (let offset = 1; offset >= -7; offset--) {
+    const day = new Date(japan);
+    day.setDate(day.getDate() + offset);
+    const date = [
+      day.getFullYear(),
+      String(day.getMonth() + 1).padStart(2, "0"),
+      String(day.getDate()).padStart(2, "0")
+    ].join("-");
+
+    const url = "data/charts/" + date + ".html";
+    const response = await fetch(url, { method: "HEAD" });
+
+    if (response.ok) {
+      link.href = url;
+      status.textContent = "最新グラフ：" + date;
+      return;
+    }
+  }
+
+  status.textContent = "グラフはまだ準備中です。";
+  link.style.display = "none";
+})().catch(function () {
+  document.getElementById("status").textContent =
+    "データの確認に失敗しました。再読み込みしてください。";
+});
+</script>
+</body>
+</html>
