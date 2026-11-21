@@ -27,6 +27,7 @@ for row in rows:
         by_day[day][int(period)] = row
 
 jst = timezone(timedelta(hours=9))
+today = datetime.now(jst).date().isoformat()
 start_date = (datetime.now(jst).date() - timedelta(days=6)).isoformat()
 saved = 0
 
