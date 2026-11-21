@@ -1,0 +1,41 @@
+name: TEPCO Forecast Daily
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '25 22 * * *'
+    - cron: '0 9 * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tepco-forecast-daily
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Download TEPCO forecast data
+        run: python scripts/fetch_tepco.py
+
+      - name: Save forecast data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/tepco/
+          if ! git diff --cached --quiet; then
+            git commit -m "Update TEPCO forecast data"
+            git pull --rebase
+            git push
+          fi
