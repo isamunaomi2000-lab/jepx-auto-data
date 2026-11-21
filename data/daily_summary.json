@@ -1,33 +1,33 @@
 {
   "source": "https://japanesepower.org/jepxSpot.csv",
-  "retrieved_at": "2026-11-21T07:51:34.643708+09:00",
-  "date": "2026-11-21",
-  "previous_date": "2026-11-20",
+  "retrieved_at": "2026-11-22T07:46:06.783517+09:00",
+  "date": "2026-11-22",
+  "previous_date": "2026-11-21",
   "unit": "JPY/kWh",
   "prices": {
     "system": {
-      "average": 30.31,
-      "maximum": 43.71,
-      "minimum": 12.5,
-      "average_change": -3.93
+      "average": 27.96,
+      "maximum": 41.9,
+      "minimum": 9.18,
+      "average_change": -2.35
     },
     "tokyo": {
-      "average": 30.07,
-      "maximum": 37.65,
-      "minimum": 13.0,
-      "average_change": -3.67
+      "average": 28.61,
+      "maximum": 40.3,
+      "minimum": 9.4,
+      "average_change": -1.46
     },
     "kansai": {
-      "average": 31.6,
-      "maximum": 47.15,
-      "minimum": 13.25,
-      "average_change": -4.5
+      "average": 27.8,
+      "maximum": 40.21,
+      "minimum": 9.4,
+      "average_change": -3.8
     },
     "kyushu": {
-      "average": 31.55,
-      "maximum": 47.15,
-      "minimum": 13.25,
-      "average_change": -3.31
+      "average": 26.5,
+      "maximum": 40.21,
+      "minimum": 7.9,
+      "average_change": -5.05
     }
   }
 }

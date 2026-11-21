@@ -1,7 +1,7 @@
 {
   "source": "https://japanesepower.org/jepxSpot.csv",
-  "retrieved_at": "2026-11-21T07:51:34.643708+09:00",
-  "row_count": 291792,
+  "retrieved_at": "2026-11-22T07:46:06.783517+09:00",
+  "row_count": 291840,
   "columns": [
     "datetime",
     "Date",
@@ -25,25 +25,25 @@
     "Buy Block Contracted Total Volume kWh"
   ],
   "latest_row": {
-    "datetime": "2026-11-21 23:30:00",
-    "Date": "2026-11-21",
+    "datetime": "2026-11-22 23:30:00",
+    "Date": "2026-11-22",
     "PeriodID": "48",
-    "System Price Yen/kWh": "29.98",
-    "Hokkaido Yen/kWh": "29.22",
-    "Tohoku Yen/kWh": "29.22",
-    "Tokyo Yen/kWh": "30.51",
-    "Chuubu Yen/kWh": "30.51",
+    "System Price Yen/kWh": "30.51",
+    "Hokkaido Yen/kWh": "25.87",
+    "Tohoku Yen/kWh": "25.87",
+    "Tokyo Yen/kWh": "32.0",
+    "Chuubu Yen/kWh": "32.0",
     "Hokuriku Yen/kWh": "30.05",
     "Kansai Yen/kWh": "30.05",
     "Chuugoku Yen/kWh": "30.05",
     "Kyushu Yen/kWh": "30.05",
     "Shikoku Yen/kWh": "30.05",
-    "Sell Bid Volume kWh": "28215050",
-    "Buy Bid Volume kWh": "24790400",
-    "Contracted Total Volume kWh": "19522700",
-    "Sell Block Bid Total Volume kWh": "8296350.0",
-    "Sell Block Contracted Total Volume kWh": "2463400.0",
-    "Buy Block Bid Total Volume kWh": "685700.0",
-    "Buy Block Contracted Total Volume kWh": "462600.0"
+    "Sell Bid Volume kWh": "28114650",
+    "Buy Bid Volume kWh": "25433050",
+    "Contracted Total Volume kWh": "19650850",
+    "Sell Block Bid Total Volume kWh": "8023050.0",
+    "Sell Block Contracted Total Volume kWh": "2715000.0",
+    "Buy Block Bid Total Volume kWh": "627600.0",
+    "Buy Block Contracted Total Volume kWh": "460500.0"
   }
 }
