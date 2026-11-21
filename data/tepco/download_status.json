@@ -3,12 +3,12 @@
     "status": "ok",
     "source": "https://www4.tepco.co.jp/forecast/html/images/AREA_YOSOKU.csv",
     "rows": 51,
-    "downloaded_at_jst": "2026-11-21T20:34:04.912781+09:00"
+    "downloaded_at_jst": "2026-11-21T20:34:57.871589+09:00"
   },
   "tomorrow": {
     "status": "ok",
     "source": "https://www4.tepco.co.jp/forecast/html/images/AREA_ONCE_YOSOKU.csv",
     "rows": 51,
-    "downloaded_at_jst": "2026-11-21T20:34:04.912781+09:00"
+    "downloaded_at_jst": "2026-11-21T20:34:57.871589+09:00"
   }
 }
