@@ -20,56 +20,104 @@ main {
 }
 a {
   display: block;
-  padding: 15px;
-  margin-top: 20px;
-  background: #1769e0;
+  padding: 16px;
+  margin-top: 15px;
   color: white;
   border-radius: 10px;
   text-decoration: none;
+  font-weight: bold;
 }
+.blue { background: #2563eb; }
+.green { background: #16a34a; }
+.hidden { display: none; }
 </style>
 </head>
 <body>
 <main>
 <h1>JEPX 東京エリア価格予測</h1>
-<p>最新の予測価格と実績価格を確認できます。</p>
+<p>最新の予測グラフを確認できます。</p>
 <p id="status">最新データを確認中...</p>
-<a id="chart" href="#">最新グラフを開く</a>
+
+<a id="base" class="blue hidden" href="#">
+従来予測グラフを見る
+</a>
+
+<a id="comparison" class="green hidden" href="#">
+東電PG連動・3本比較グラフを見る
+</a>
 </main>
+
 <script>
-(async function () {
-  const status = document.getElementById("status");
-  const link = document.getElementById("chart");
-  const now = new Date();
-  const japan = new Date(now.toLocaleString("en-US", {
-    timeZone: "Asia/Tokyo"
-  }));
+function japanDate(offset) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(new Date());
 
-  for (let offset = 1; offset >= -7; offset--) {
-    const day = new Date(japan);
-    day.setDate(day.getDate() + offset);
-    const date = [
-      day.getFullYear(),
-      String(day.getMonth() + 1).padStart(2, "0"),
-      String(day.getDate()).padStart(2, "0")
-    ].join("-");
+  const values = Object.fromEntries(
+    parts.map(p => [p.type, p.value])
+  );
 
-    const url = "data/charts/" + date + ".html";
-    const response = await fetch(url, { method: "HEAD" });
+  const date = new Date(Date.UTC(
+    Number(values.year),
+    Number(values.month) - 1,
+    Number(values.day) + offset
+  ));
 
-    if (response.ok) {
-      link.href = url;
-      status.textContent = "最新グラフ：" + date;
-      return;
+  return date.toISOString().slice(0, 10);
+}
+
+async function findLatest(folder) {
+  for (let offset = 1; offset >= -14; offset--) {
+    const date = japanDate(offset);
+    const url = folder + "/" + date + ".html";
+
+    try {
+      const response = await fetch(url, {
+        method: "HEAD",
+        cache: "no-store"
+      });
+
+      if (response.ok) {
+        return { date, url };
+      }
+    } catch (error) {
+      console.log("Checking:", url);
     }
   }
+  return null;
+}
 
-  status.textContent = "グラフはまだ準備中です。";
-  link.style.display = "none";
-})().catch(function () {
-  document.getElementById("status").textContent =
-    "データの確認に失敗しました。再読み込みしてください。";
-});
+async function main() {
+  const status = document.getElementById("status");
+
+  const [base, comparison] = await Promise.all([
+    findLatest("data/charts"),
+    findLatest("data/comparison")
+  ]);
+
+  if (base) {
+    const button = document.getElementById("base");
+    button.href = base.url;
+    button.classList.remove("hidden");
+  }
+
+  if (comparison) {
+    const button = document.getElementById("comparison");
+    button.href = comparison.url;
+    button.classList.remove("hidden");
+  }
+
+  if (base || comparison) {
+    status.textContent = "最新のグラフを表示できます";
+  } else {
+    status.textContent = "グラフは現在準備中です";
+  }
+}
+
+main();
 </script>
 </body>
 </html>
