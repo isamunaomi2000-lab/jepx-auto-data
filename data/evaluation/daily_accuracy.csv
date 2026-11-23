@@ -1,1 +1,2 @@
 ﻿date,periods,mae_yen_kwh,rmse_yen_kwh,bias_yen_kwh,tepco_mae_yen_kwh,tepco_rmse_yen_kwh,tepco_bias_yen_kwh,winner
+2026-11-22,48,5.077,8.015,4.341,4.726,6.582,4.541,tepco
