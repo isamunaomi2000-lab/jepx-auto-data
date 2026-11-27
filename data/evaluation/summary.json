@@ -1,5 +1,5 @@
 {
-  "evaluated_days": 4,
+  "evaluated_days": 5,
   "compared_days": 1,
   "baseline_wins": 0,
   "tepco_wins": 1,
@@ -46,6 +46,17 @@
       "mae_yen_kwh": 3.058,
       "rmse_yen_kwh": 3.866,
       "bias_yen_kwh": -2.99,
+      "tepco_mae_yen_kwh": "",
+      "tepco_rmse_yen_kwh": "",
+      "tepco_bias_yen_kwh": "",
+      "winner": "not_comparable"
+    },
+    {
+      "date": "2026-11-26",
+      "periods": 48,
+      "mae_yen_kwh": 3.45,
+      "rmse_yen_kwh": 4.44,
+      "bias_yen_kwh": -2.63,
       "tepco_mae_yen_kwh": "",
       "tepco_rmse_yen_kwh": "",
       "tepco_bias_yen_kwh": "",
