@@ -4,6 +4,7 @@ import io
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
+from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 from zipfile import ZipFile
 
@@ -12,12 +13,24 @@ from fetch_jepx import JST, PERIODS
 BASE = "https://www4.tepco.co.jp/forecast/html/images/"
 SOURCES = {"today": "AREA_YOSOKU.csv", "tomorrow": "AREA_ONCE_YOSOKU.csv"}
 OUTPUT = Path("data/tepco")
+DOWNLOAD_PAGE = "https://www.tepco.co.jp/forecast/html/area-download-j.html"
 
 
 def download(filename):
-    request = Request(BASE + filename, headers={"Cache-Control": "no-cache"})
-    with urlopen(request, timeout=25) as response:
-        return response.read()
+    headers = {"Referer": DOWNLOAD_PAGE}
+    if not filename.endswith(".zip"):
+        headers["Cache-Control"] = "no-cache"
+    url = BASE + filename
+    try:
+        with urlopen(Request(url, headers=headers), timeout=25) as response:
+            return response.read(), response.url
+    except HTTPError as error:
+        if not filename.endswith(".zip") or error.code not in (403, 404):
+            raise
+    # The operator serves the monthly archives on both official hostnames.
+    alternate = url.replace("https://www4.tepco.co.jp/", "https://www.tepco.co.jp/", 1)
+    with urlopen(Request(alternate, headers=headers), timeout=25) as response:
+        return response.read(), response.url
 
 
 def rows_from_csv(raw):
@@ -58,7 +71,8 @@ def summarize_area(raw, target, forecast):
 
 def summarize_supply(now):
     filename = "juyo-s1-j.csv"
-    rows = rows_from_csv(download(filename))
+    raw, source = download(filename)
+    rows = rows_from_csv(raw)
     updated = datetime.strptime(rows[0][0], "%Y/%m/%d %H:%M UPDATE").replace(tzinfo=JST)
     if updated.date() != now.date():
         raise ValueError(f"TEPCO supply CSV is dated {updated.date()}")
@@ -70,7 +84,7 @@ def summarize_supply(now):
         row[0]: rows[i + 1] for i, row in enumerate(rows[:-1])
         if row and any(row[0] in fields for fields in sections.values())
     }
-    summary = {"source": BASE + filename, "published_at": updated.isoformat()}
+    summary = {"source": source, "published_at": updated.isoformat()}
     for offset, (label, (supply, demand, utilization)) in enumerate(sections.items()):
         item = {"date": (now.date() + timedelta(days=offset)).isoformat()}
         if label == "tomorrow" and all(not any(values.get(field, [])) for field in sections[label]):
@@ -94,7 +108,7 @@ def collect(now):
         target = now.date() + timedelta(days=offset)
         details = {"source": BASE + filename, "date": target.isoformat(), "downloaded_at_jst": now.isoformat()}
         try:
-            raw = download(filename)
+            raw, details["source"] = download(filename)
             details.update(summarize_area(raw, target, forecast=True))
             if details["status"] == "ok":
                 timestamp = now.strftime("%Y%m%d_%H%M%S")
@@ -109,7 +123,8 @@ def collect(now):
     member = f"AREA_JISEKI_{target:%Y%m%d}.csv"
     actual = {"source": BASE + filename, "archive_member": member, "date": target.isoformat()}
     try:
-        with ZipFile(io.BytesIO(download(filename)), metadata_encoding="cp932") as archive:
+        raw, actual["source"] = download(filename)
+        with ZipFile(io.BytesIO(raw), metadata_encoding="cp932") as archive:
             actual.update(summarize_area(archive.read(member), target, forecast=False))
     except Exception as error:
         actual.update(status="error", error=str(error))

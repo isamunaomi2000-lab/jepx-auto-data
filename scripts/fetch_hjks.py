@@ -2,13 +2,15 @@
 import csv
 import io
 import json
+import ssl
 from collections import Counter
 from datetime import date, datetime, timedelta
 from html.parser import HTMLParser
 from http.cookiejar import CookieJar
 from pathlib import Path
 from urllib.parse import urlencode, urljoin, urlsplit
-from urllib.request import HTTPCookieProcessor, Request, build_opener
+from urllib.error import URLError
+from urllib.request import HTTPSHandler, HTTPCookieProcessor, Request, build_opener
 
 from fetch_jepx import JST
 
@@ -45,8 +47,8 @@ class DownloadForm(HTMLParser):
             self.in_form = False
 
 
-def download():
-    opener = build_opener(HTTPCookieProcessor(CookieJar()))
+def download_csv(context):
+    opener = build_opener(HTTPSHandler(context=context), HTTPCookieProcessor(CookieJar()))
     form = DownloadForm()
     with opener.open(SOURCE, timeout=25) as response:
         form.feed(response.read().decode("utf-8"))
@@ -60,6 +62,19 @@ def download():
         if response.headers.get_content_type() != "text/csv":
             raise ValueError("HJKS public download did not return a CSV")
         return response.read().decode("cp932")
+
+
+def download():
+    context = ssl.create_default_context()
+    try:
+        return download_csv(context)
+    except URLError as error:
+        if not isinstance(error.reason, ssl.SSLError) or error.reason.reason != "SSLV3_ALERT_HANDSHAKE_FAILURE":
+            raise
+    # Retry with TLS 1.2 for servers that reject the initial TLS negotiation.
+    # The default CA and hostname checks still apply.
+    context.maximum_version = ssl.TLSVersion.TLSv1_2
+    return download_csv(context)
 
 
 def calendar_date(value):
