@@ -29,28 +29,36 @@ jobs:
         with:
           python-version: '3.12'
       - name: Download JEPX data
-        id: spot
-        continue-on-error: true
         run: python scripts/fetch_jepx.py
-      - name: Download HJKS public outage records
-        id: outages
-        continue-on-error: true
-        run: python scripts/fetch_hjks.py
-      - name: Save verified JEPX and HJKS results
+      - name: Save verified JEPX results
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if [ "${{ steps.spot.outcome }}" = success ]; then
-            git add data/latest.json data/daily_summary.json
-          fi
-          if [ "${{ steps.outages.outcome }}" = success ]; then
-            git add data/hjks/latest.json
-          fi
+          git add data/latest.json data/daily_summary.json
           if ! git diff --cached --quiet; then
-            git commit -m "Update verified JEPX and HJKS data"
+            git commit -m "Update verified JEPX data"
             git pull --rebase
             git push
           fi
-      - name: Report official source failures
-        if: steps.spot.outcome == 'failure' || steps.outages.outcome == 'failure'
-        run: exit 1
+
+  collect-hjks:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download HJKS public outage records
+        run: python scripts/fetch_hjks.py
+      - name: Save verified HJKS results
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/hjks/latest.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Update verified HJKS data"
+            git pull --rebase
+            git push
+          fi
