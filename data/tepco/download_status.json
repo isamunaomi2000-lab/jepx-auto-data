@@ -2,48 +2,27 @@
   "today": {
     "source": "https://www4.tepco.co.jp/forecast/html/images/AREA_YOSOKU.csv",
     "date": "2026-11-28",
-    "downloaded_at_jst": "2026-11-28T13:12:07.347509+09:00",
-    "status": "ok",
-    "period_count": 48,
-    "peak_demand_period": 20,
-    "peak_demand_30min_kwh": 15777500,
-    "peak_generation_30min_kwh": 14224500,
-    "peak_wind_solar_30min_kwh": 4101458
+    "downloaded_at_jst": "2026-11-28T19:13:36.153364+09:00",
+    "status": "error",
+    "error": "HTTP Error 403: Forbidden"
   },
   "tomorrow": {
     "source": "https://www4.tepco.co.jp/forecast/html/images/AREA_ONCE_YOSOKU.csv",
     "date": "2026-11-29",
-    "downloaded_at_jst": "2026-11-28T13:12:07.347509+09:00",
-    "status": "not_published",
-    "published_metadata_date": "20261128",
-    "period_count": 0
+    "downloaded_at_jst": "2026-11-28T19:13:36.153364+09:00",
+    "status": "error",
+    "error": "HTTP Error 403: Forbidden"
   },
   "yesterday_actual": {
     "source": "https://www.tepco.co.jp/forecast/html/images/eria_jukyu_202611_03.csv",
     "date": "2026-11-27",
-    "downloaded_at_jst": "2026-11-28T13:12:07.347509+09:00",
-    "status": "ok",
-    "period_count": 48,
-    "peak_demand_period": 19,
-    "peak_demand_30min_kwh": 17696000,
-    "peak_supply_actual_30min_kwh": 17696000,
-    "peak_wind_solar_30min_kwh": 6524000
+    "downloaded_at_jst": "2026-11-28T19:13:36.153364+09:00",
+    "status": "error",
+    "error": "monthly CSV: HTTP Error 403: Forbidden; archive: HTTP Error 403: Forbidden"
   },
   "supply": {
     "source": "https://www4.tepco.co.jp/forecast/html/images/juyo-s1-j.csv",
-    "published_at": "2026-11-28T13:05:00+09:00",
-    "today": {
-      "date": "2026-11-28",
-      "status": "ok",
-      "demand_peak_mw": 31430,
-      "supply_at_demand_peak_mw": 35290,
-      "demand_peak_time": "9:00～10:00",
-      "usage_peak_percent": 89.0,
-      "usage_peak_time": "6:00～7:00"
-    },
-    "tomorrow": {
-      "date": "2026-11-29",
-      "status": "not_published"
-    }
+    "status": "error",
+    "error": "HTTP Error 403: Forbidden"
   }
 }
