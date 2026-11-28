@@ -1,6 +1,6 @@
 {
   "source": "https://www.jepx.jp/js/csv_read.php?dir=spot_summary&file=spot_summary_2026.csv",
-  "retrieved_at": "2026-11-28T13:00:38.257954+09:00",
+  "retrieved_at": "2026-11-28T13:02:57.225122+09:00",
   "row_count": 11664,
   "columns": [
     "datetime",
