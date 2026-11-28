@@ -4,7 +4,11 @@ name: JEPX Daily
 on:
   workflow_dispatch:
   schedule:
-    - cron: '10 22 * * *'
+    - cron: '50 21 * * *'
+
+concurrency:
+  group: jepx-daily-${{ github.ref }}
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -12,17 +16,35 @@ permissions:
 jobs:
   collect:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - name: Download JEPX data
+        id: spot
+        continue-on-error: true
         run: python scripts/fetch_jepx.py
-      - name: Save JEPX results
+      - name: Download HJKS public outage records
+        id: outages
+        continue-on-error: true
+        run: python scripts/fetch_hjks.py
+      - name: Save verified JEPX and HJKS results
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/latest.json data/daily_summary.json
-          git commit -m "Update JEPX data"
-          git push
+          if [ "${{ steps.spot.outcome }}" = success ]; then
+            git add data/latest.json data/daily_summary.json
+          fi
+          if [ "${{ steps.outages.outcome }}" = success ]; then
+            git add data/hjks/latest.json
+          fi
+          if ! git diff --cached --quiet; then
+            git commit -m "Update verified JEPX and HJKS data"
+            git pull --rebase
+            git push
+          fi
+      - name: Report official source failures
+        if: steps.spot.outcome == 'failure' || steps.outages.outcome == 'failure'
+        run: exit 1

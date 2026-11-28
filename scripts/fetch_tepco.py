@@ -1,75 +1,132 @@
-"""Download TEPCO Power Grid area demand forecast CSV files."""
-from datetime import datetime
-from pathlib import Path
-from urllib.request import Request, urlopen
-from zoneinfo import ZoneInfo
+"""Collect TEPCO PG forecasts, yesterday's actuals and Tokyo supply peaks."""
 import csv
 import io
 import json
+from datetime import datetime, timedelta
+from pathlib import Path
+from urllib.request import Request, urlopen
+from zipfile import ZipFile
+
+from fetch_jepx import JST, PERIODS
 
 BASE = "https://www4.tepco.co.jp/forecast/html/images/"
-SOURCES = {
-    "today": "AREA_YOSOKU.csv",
-    "tomorrow": "AREA_ONCE_YOSOKU.csv",
-}
+SOURCES = {"today": "AREA_YOSOKU.csv", "tomorrow": "AREA_ONCE_YOSOKU.csv"}
 OUTPUT = Path("data/tepco")
-OUTPUT.mkdir(parents=True, exist_ok=True)
 
-now = datetime.now(ZoneInfo("Asia/Tokyo"))
-results = {}
 
-for label, filename in SOURCES.items():
-    url = BASE + filename
+def download(filename):
+    request = Request(BASE + filename, headers={"Cache-Control": "no-cache"})
+    with urlopen(request, timeout=25) as response:
+        return response.read()
+
+
+def rows_from_csv(raw):
     try:
-        request = Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urlopen(request, timeout=30) as response:
-            raw = response.read()
-        if not raw:
-            raise ValueError("Empty CSV")
-        decoded = None
-        for encoding in ("utf-8-sig", "cp932"):
-            try:
-                decoded = raw.decode(encoding)
-                break
-            except UnicodeDecodeError:
-                continue
-        if decoded is None:
-            raise ValueError("Unsupported CSV encoding")
-        rows = list(csv.reader(io.StringIO(decoded)))
-        if len(rows) < 2:
-            raise ValueError("CSV contains too few rows")
-        (OUTPUT / (label + "_latest.csv")).write_bytes(raw)
-        results[label] = {
-            "status": "ok",
-            "source": url,
-            "rows": len(rows),
-            "downloaded_at_jst": now.isoformat(),
+        content = raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        content = raw.decode("cp932")
+    return list(csv.reader(io.StringIO(content)))
+
+
+def summarize_area(raw, target, forecast):
+    rows = rows_from_csv(raw)
+    compact = target.strftime("%Y%m%d")
+    if len(rows) < 3 or "対象年月日" not in ",".join(rows[0]):
+        raise ValueError("unexpected TEPCO area CSV header")
+    if rows[2][4:7] not in (
+        ["エリア総需要量", "エリア総発電量", "エリア風力・太陽光発電量"],
+        ["エリア総需要量[30分kWh]", "エリア総発電量[30分kWh]", "エリア風力・太陽光発電量[30分kWh]"],
+    ):
+        raise ValueError("unexpected TEPCO area CSV data columns")
+    if not rows[3:] and forecast:
+        return {"status": "not_published", "published_metadata_date": rows[1][2], "period_count": 0}
+    if rows[1][2] != compact or any(row[0] != compact for row in rows[3:]):
+        raise ValueError(f"TEPCO CSV target differs from {target}")
+    if len(rows[3:]) != 48 or {int(row[1]) for row in rows[3:]} != PERIODS:
+        raise ValueError(f"TEPCO CSV requires 48 distinct periods for {target}")
+    entries = [(int(row[1]), *(int(value) for value in row[4:7])) for row in rows[3:]]
+    if any(demand <= 0 or generation < 0 or renewables < 0 for _, demand, generation, renewables in entries):
+        raise ValueError(f"TEPCO CSV has invalid or unfinished data for {target}")
+    period, demand, _, _ = max(entries, key=lambda row: row[1])
+    return {
+        "status": "ok", "period_count": 48, "peak_demand_period": period,
+        "peak_demand_30min_kwh": demand,
+        "peak_generation_30min_kwh": max(row[2] for row in entries),
+        "peak_wind_solar_30min_kwh": max(row[3] for row in entries),
+    }
+
+
+def summarize_supply(now):
+    filename = "juyo-s1-j.csv"
+    rows = rows_from_csv(download(filename))
+    updated = datetime.strptime(rows[0][0], "%Y/%m/%d %H:%M UPDATE").replace(tzinfo=JST)
+    if updated.date() != now.date():
+        raise ValueError(f"TEPCO supply CSV is dated {updated.date()}")
+    sections = {
+        "today": ("ピーク時供給力(万kW)", "予想最大電力(万kW)", "使用率ピーク時供給力(万kW)"),
+        "tomorrow": ("翌日のピーク時供給力(万kW)", "翌日の予想最大電力(万kW)", "翌日の使用率ピーク時供給力(万kW)"),
+    }
+    values = {
+        row[0]: rows[i + 1] for i, row in enumerate(rows[:-1])
+        if row and any(row[0] in fields for fields in sections.values())
+    }
+    summary = {"source": BASE + filename, "published_at": updated.isoformat()}
+    for offset, (label, (supply, demand, utilization)) in enumerate(sections.items()):
+        item = {"date": (now.date() + timedelta(days=offset)).isoformat()}
+        if label == "tomorrow" and all(not any(values.get(field, [])) for field in sections[label]):
+            summary[label] = {**item, "status": "not_published"}
+            continue
+        summary[label] = {
+            **item, "status": "ok", "demand_peak_mw": int(values[demand][0]) * 10,
+            "supply_at_demand_peak_mw": int(values[supply][0]) * 10,
+            "demand_peak_time": values[demand][1],
+            "usage_peak_percent": float(values[utilization][-1]),
+            "usage_peak_time": values[utilization][1],
         }
-        print(f"{label}: downloaded {len(raw)} bytes")
-    except Exception as exc:
-        results[label] = {"status": "error", "source": url, "error": str(exc)}
-        print(f"{label}: ERROR: {exc}")
+    return summary
 
-(OUTPUT / "download_status.json").write_text(
-    json.dumps(results, ensure_ascii=False, indent=2),
-    encoding="utf-8",
-)
-if any(item["status"] == "error" for item in results.values()):
-    raise SystemExit(1)
 
-# Save dated snapshots for historical analysis
-HISTORY = OUTPUT / "history"
-HISTORY.mkdir(parents=True, exist_ok=True)
+def collect(now):
+    history = OUTPUT / "history"
+    history.mkdir(parents=True, exist_ok=True)
+    results = {}
+    for offset, (label, filename) in enumerate(SOURCES.items()):
+        target = now.date() + timedelta(days=offset)
+        details = {"source": BASE + filename, "date": target.isoformat(), "downloaded_at_jst": now.isoformat()}
+        try:
+            raw = download(filename)
+            details.update(summarize_area(raw, target, forecast=True))
+            if details["status"] == "ok":
+                timestamp = now.strftime("%Y%m%d_%H%M%S")
+                (OUTPUT / f"{label}_latest.csv").write_bytes(raw)
+                (history / f"{target:%Y%m%d}_{label}_{timestamp}.csv").write_bytes(raw)
+        except Exception as error:
+            details.update(status="error", error=str(error))
+        results[label] = details
 
-for label in SOURCES:
-    if results[label]["status"] != "ok":
-        continue
-    latest = OUTPUT / (label + "_latest.csv")
-    with latest.open("r", encoding="cp932") as file:
-        metadata = list(csv.reader(file))[:2]
-    target_date = metadata[1][2]
-    if not (len(target_date) == 8 and target_date.isdigit()):
-        raise ValueError("Invalid forecast target date")
-    snapshot = HISTORY / f"{target_date}_{label}_{now.strftime('%Y%m%d_%H%M%S')}.csv"
-    snapshot.write_bytes(latest.read_bytes())
-    print(f"Saved historical snapshot: {snapshot}")
+    target = now.date() - timedelta(days=1)
+    filename = f"AREA_{target:%Y%m}.zip"
+    member = f"AREA_JISEKI_{target:%Y%m%d}.csv"
+    actual = {"source": BASE + filename, "archive_member": member, "date": target.isoformat()}
+    try:
+        with ZipFile(io.BytesIO(download(filename)), metadata_encoding="cp932") as archive:
+            actual.update(summarize_area(archive.read(member), target, forecast=False))
+    except Exception as error:
+        actual.update(status="error", error=str(error))
+    results["yesterday_actual"] = actual
+    try:
+        results["supply"] = summarize_supply(now)
+    except Exception as error:
+        results["supply"] = {"source": BASE + "juyo-s1-j.csv", "status": "error", "error": str(error)}
+
+    (OUTPUT / "download_status.json").write_text(
+        json.dumps(results, ensure_ascii=False, indent=2) + "\n", encoding="utf-8",
+    )
+    return results
+
+
+if __name__ == "__main__":
+    results = collect(datetime.now(JST))
+    print(json.dumps(results, ensure_ascii=False, indent=2))
+    if any(item.get("status") == "error" for item in results.values()):
+        raise SystemExit(1)

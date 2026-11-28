@@ -3,7 +3,7 @@ name: TEPCO Forecast Daily
 on:
   workflow_dispatch:
   schedule:
-    - cron: '25 22 * * *'
+    - cron: '0 22 * * *'
     - cron: '0 9 * * *'
 
 permissions:
@@ -27,6 +27,8 @@ jobs:
           python-version: '3.12'
 
       - name: Download TEPCO forecast data
+        id: download
+        continue-on-error: true
         run: python scripts/fetch_tepco.py
 
       - name: Save forecast data
@@ -39,3 +41,6 @@ jobs:
             git pull --rebase
             git push
           fi
+      - name: Report TEPCO source failures
+        if: steps.download.outcome == 'failure'
+        run: exit 1
