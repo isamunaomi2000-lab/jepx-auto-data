@@ -2,7 +2,7 @@
   "today": {
     "source": "https://www4.tepco.co.jp/forecast/html/images/AREA_YOSOKU.csv",
     "date": "2026-11-28",
-    "downloaded_at_jst": "2026-11-28T13:08:18.471039+09:00",
+    "downloaded_at_jst": "2026-11-28T13:09:40.473244+09:00",
     "status": "ok",
     "period_count": 48,
     "peak_demand_period": 20,
@@ -13,7 +13,7 @@
   "tomorrow": {
     "source": "https://www4.tepco.co.jp/forecast/html/images/AREA_ONCE_YOSOKU.csv",
     "date": "2026-11-29",
-    "downloaded_at_jst": "2026-11-28T13:08:18.471039+09:00",
+    "downloaded_at_jst": "2026-11-28T13:09:40.473244+09:00",
     "status": "not_published",
     "published_metadata_date": "20261128",
     "period_count": 0
@@ -21,7 +21,7 @@
   "yesterday_actual": {
     "source": "https://www.tepco.co.jp/forecast/html/images/eria_jukyu_202611_03.csv",
     "date": "2026-11-27",
-    "downloaded_at_jst": "2026-11-28T13:08:18.471039+09:00",
+    "downloaded_at_jst": "2026-11-28T13:09:40.473244+09:00",
     "status": "ok",
     "period_count": 48,
     "peak_demand_period": 19,
