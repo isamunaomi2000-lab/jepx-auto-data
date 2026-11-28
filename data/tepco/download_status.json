@@ -2,7 +2,7 @@
   "today": {
     "source": "https://www4.tepco.co.jp/forecast/html/images/AREA_YOSOKU.csv",
     "date": "2026-11-28",
-    "downloaded_at_jst": "2026-11-28T13:02:09.024917+09:00",
+    "downloaded_at_jst": "2026-11-28T13:02:50.493774+09:00",
     "status": "ok",
     "period_count": 48,
     "peak_demand_period": 20,
@@ -13,7 +13,7 @@
   "tomorrow": {
     "source": "https://www4.tepco.co.jp/forecast/html/images/AREA_ONCE_YOSOKU.csv",
     "date": "2026-11-29",
-    "downloaded_at_jst": "2026-11-28T13:02:09.024917+09:00",
+    "downloaded_at_jst": "2026-11-28T13:02:50.493774+09:00",
     "status": "not_published",
     "published_metadata_date": "20261128",
     "period_count": 0
@@ -22,16 +22,12 @@
     "source": "https://www4.tepco.co.jp/forecast/html/images/AREA_202611.zip",
     "archive_member": "AREA_JISEKI_20261127.csv",
     "date": "2026-11-27",
-    "status": "ok",
-    "period_count": 48,
-    "peak_demand_period": 19,
-    "peak_demand_30min_kwh": 17700000,
-    "peak_generation_30min_kwh": 17073000,
-    "peak_wind_solar_30min_kwh": 6516000
+    "status": "error",
+    "error": "HTTP Error 403: Forbidden"
   },
   "supply": {
     "source": "https://www4.tepco.co.jp/forecast/html/images/juyo-s1-j.csv",
-    "published_at": "2026-11-28T12:50:00+09:00",
+    "published_at": "2026-11-28T12:55:00+09:00",
     "today": {
       "date": "2026-11-28",
       "status": "ok",
