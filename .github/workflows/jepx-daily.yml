@@ -3,6 +3,12 @@ name: JEPX Daily
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/jepx-daily.yml'
+      - 'scripts/fetch_jepx.py'
+      - 'scripts/fetch_hjks.py'
   schedule:
     - cron: '50 21 * * *'
 

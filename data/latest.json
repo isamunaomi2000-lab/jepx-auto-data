@@ -1,7 +1,7 @@
 {
-  "source": "https://japanesepower.org/jepxSpot.csv",
-  "retrieved_at": "2026-11-28T08:00:29.412853+09:00",
-  "row_count": 292128,
+  "source": "https://www.jepx.jp/js/csv_read.php?dir=spot_summary&file=spot_summary_2026.csv",
+  "retrieved_at": "2026-11-28T13:00:38.257954+09:00",
+  "row_count": 11664,
   "columns": [
     "datetime",
     "Date",
@@ -41,9 +41,9 @@
     "Sell Bid Volume kWh": "30501200",
     "Buy Bid Volume kWh": "23798750",
     "Contracted Total Volume kWh": "19745350",
-    "Sell Block Bid Total Volume kWh": "9401450.0",
-    "Sell Block Contracted Total Volume kWh": "2173300.0",
-    "Buy Block Bid Total Volume kWh": "404150.0",
-    "Buy Block Contracted Total Volume kWh": "364650.0"
+    "Sell Block Bid Total Volume kWh": "9401450",
+    "Sell Block Contracted Total Volume kWh": "2173300",
+    "Buy Block Bid Total Volume kWh": "404150",
+    "Buy Block Contracted Total Volume kWh": "364650"
   }
 }

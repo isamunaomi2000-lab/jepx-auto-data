@@ -2,6 +2,12 @@ name: JEPX Price History
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/jepx-history.yml'
+      - 'scripts/fetch_jepx.py'
+      - 'scripts/save_jepx_history.py'
   schedule:
     - cron: '40 22 * * *'
 

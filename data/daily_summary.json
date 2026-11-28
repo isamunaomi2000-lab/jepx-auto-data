@@ -1,9 +1,11 @@
 {
-  "source": "https://japanesepower.org/jepxSpot.csv",
-  "retrieved_at": "2026-11-28T08:00:29.412853+09:00",
+  "source": "https://www.jepx.jp/js/csv_read.php?dir=spot_summary&file=spot_summary_2026.csv",
+  "retrieved_at": "2026-11-28T13:00:38.257954+09:00",
   "date": "2026-11-28",
   "previous_date": "2026-11-27",
   "unit": "JPY/kWh",
+  "period_count": 48,
+  "contracted_total_kwh": 1004958150,
   "prices": {
     "system": {
       "average": 26.11,

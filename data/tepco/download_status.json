@@ -1,14 +1,49 @@
 {
   "today": {
-    "status": "ok",
     "source": "https://www4.tepco.co.jp/forecast/html/images/AREA_YOSOKU.csv",
-    "rows": 51,
-    "downloaded_at_jst": "2026-11-28T08:16:39.414448+09:00"
+    "date": "2026-11-28",
+    "downloaded_at_jst": "2026-11-28T13:02:09.024917+09:00",
+    "status": "ok",
+    "period_count": 48,
+    "peak_demand_period": 20,
+    "peak_demand_30min_kwh": 15777500,
+    "peak_generation_30min_kwh": 14224500,
+    "peak_wind_solar_30min_kwh": 4101458
   },
   "tomorrow": {
-    "status": "ok",
     "source": "https://www4.tepco.co.jp/forecast/html/images/AREA_ONCE_YOSOKU.csv",
-    "rows": 3,
-    "downloaded_at_jst": "2026-11-28T08:16:39.414448+09:00"
+    "date": "2026-11-29",
+    "downloaded_at_jst": "2026-11-28T13:02:09.024917+09:00",
+    "status": "not_published",
+    "published_metadata_date": "20261128",
+    "period_count": 0
+  },
+  "yesterday_actual": {
+    "source": "https://www4.tepco.co.jp/forecast/html/images/AREA_202611.zip",
+    "archive_member": "AREA_JISEKI_20261127.csv",
+    "date": "2026-11-27",
+    "status": "ok",
+    "period_count": 48,
+    "peak_demand_period": 19,
+    "peak_demand_30min_kwh": 17700000,
+    "peak_generation_30min_kwh": 17073000,
+    "peak_wind_solar_30min_kwh": 6516000
+  },
+  "supply": {
+    "source": "https://www4.tepco.co.jp/forecast/html/images/juyo-s1-j.csv",
+    "published_at": "2026-11-28T12:50:00+09:00",
+    "today": {
+      "date": "2026-11-28",
+      "status": "ok",
+      "demand_peak_mw": 31430,
+      "supply_at_demand_peak_mw": 35290,
+      "demand_peak_time": "9:00～10:00",
+      "usage_peak_percent": 89.0,
+      "usage_peak_time": "6:00～7:00"
+    },
+    "tomorrow": {
+      "date": "2026-11-29",
+      "status": "not_published"
+    }
   }
 }
