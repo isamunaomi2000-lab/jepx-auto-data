@@ -100,6 +100,64 @@ def summarize_supply(now):
     return summary
 
 
+def summarize_supply_actual(raw, target):
+    rows = rows_from_csv(raw)
+    if not rows or rows[0][0] != "単位[MW平均]":
+        raise ValueError("unexpected TEPCO area supply and demand CSV unit")
+    header = rows[1]
+    required = {"DATE", "TIME", "エリア需要", "太陽光発電実績", "風力発電実績", "合計"}
+    if not required.issubset(header):
+        raise ValueError("unexpected TEPCO area supply and demand CSV header")
+    entries = {}
+    for values in rows[2:]:
+        row = dict(zip(header, values))
+        day = datetime.strptime(row["DATE"], "%Y/%m/%d").date()
+        if day != target:
+            continue
+        hour, minute = map(int, row["TIME"].split(":"))
+        period = hour * 2 + minute // 30 + 1
+        if minute not in (0, 30) or not 0 <= hour < 24 or period in entries:
+            raise ValueError(f"invalid TEPCO actual period for {target}: {row['TIME']}")
+        demand = int(row["エリア需要"])
+        supply = int(row["合計"])
+        renewables = int(row["太陽光発電実績"]) + int(row["風力発電実績"])
+        if demand <= 0 or supply <= 0 or renewables < 0:
+            raise ValueError(f"invalid TEPCO actual quantities for {target}: {row['TIME']}")
+        entries[period] = (demand, supply, renewables)
+    if entries.keys() != PERIODS:
+        raise ValueError(f"TEPCO monthly actual CSV requires 48 periods for {target}")
+    period = max(entries, key=lambda period: entries[period][0])
+    return {
+        "status": "ok", "period_count": 48, "peak_demand_period": period,
+        "peak_demand_30min_kwh": entries[period][0] * 500,
+        "peak_supply_actual_30min_kwh": max(row[1] for row in entries.values()) * 500,
+        "peak_wind_solar_30min_kwh": max(row[2] for row in entries.values()) * 500,
+    }
+
+
+def collect_actual(target, now):
+    # This is TEPCO PG's monthly 30-minute area balance CSV, published separately
+    # from the area forecast archive. The total includes interconnector flows.
+    url = f"https://www.tepco.co.jp/forecast/html/images/eria_jukyu_{target:%Y%m}_03.csv"
+    request = Request(url, headers={"Referer": "https://www.tepco.co.jp/forecast/html/area_jukyu-j.html"})
+    actual = {"source": url, "date": target.isoformat(), "downloaded_at_jst": now.isoformat()}
+    try:
+        with urlopen(request, timeout=25) as response:
+            return {**actual, "source": response.url, **summarize_supply_actual(response.read(), target)}
+    except (OSError, ValueError, KeyError) as error:
+        archive_error = str(error)
+
+    filename = f"AREA_{target:%Y%m}.zip"
+    member = f"AREA_JISEKI_{target:%Y%m%d}.csv"
+    try:
+        raw, source = download(filename)
+        with ZipFile(io.BytesIO(raw), metadata_encoding="cp932") as archive:
+            return {**actual, "source": source, "archive_member": member,
+                    **summarize_area(archive.read(member), target, forecast=False)}
+    except Exception as error:
+        return {**actual, "status": "error", "error": f"monthly CSV: {archive_error}; archive: {error}"}
+
+
 def collect(now):
     history = OUTPUT / "history"
     history.mkdir(parents=True, exist_ok=True)
@@ -119,16 +177,7 @@ def collect(now):
         results[label] = details
 
     target = now.date() - timedelta(days=1)
-    filename = f"AREA_{target:%Y%m}.zip"
-    member = f"AREA_JISEKI_{target:%Y%m%d}.csv"
-    actual = {"source": BASE + filename, "archive_member": member, "date": target.isoformat()}
-    try:
-        raw, actual["source"] = download(filename)
-        with ZipFile(io.BytesIO(raw), metadata_encoding="cp932") as archive:
-            actual.update(summarize_area(archive.read(member), target, forecast=False))
-    except Exception as error:
-        actual.update(status="error", error=str(error))
-    results["yesterday_actual"] = actual
+    results["yesterday_actual"] = collect_actual(target, now)
     try:
         results["supply"] = summarize_supply(now)
     except Exception as error:

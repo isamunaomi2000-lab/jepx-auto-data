@@ -9,7 +9,7 @@ on:
       - 'scripts/fetch_tepco.py'
   schedule:
     - cron: '0 22 * * *'
-    - cron: '0 9 * * *'
+    - cron: '20 9 * * *'
 
 permissions:
   contents: write

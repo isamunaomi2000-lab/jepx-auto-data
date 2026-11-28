@@ -1,19 +1,18 @@
 """Download the public HJKS CSV and select outages overlapping report dates."""
+import argparse
 import csv
 import io
 import json
-import os
-import subprocess
-from tempfile import TemporaryDirectory
 from collections import Counter
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timedelta
 from html.parser import HTMLParser
 from http.cookiejar import CookieJar
 from pathlib import Path
 from urllib.parse import urlencode, urljoin, urlsplit
 from urllib.request import HTTPCookieProcessor, Request, build_opener
 
-JST = timezone(timedelta(hours=9), "JST")
+from fetch_jepx import JST
+
 SOURCE = "https://hjks.jepx.or.jp/hjks/outages"
 COLUMNS = {
     "area": "エリア", "station_code": "発電所コード", "station": "発電所名",
@@ -47,40 +46,17 @@ class DownloadForm(HTMLParser):
             self.in_form = False
 
 
-def export_request(page):
+def download():
+    opener = build_opener(HTTPCookieProcessor(CookieJar()))
     form = DownloadForm()
-    form.feed(page.decode("utf-8"))
+    with opener.open(SOURCE, timeout=25) as response:
+        form.feed(response.read().decode("utf-8"))
     if not form.action or not {"csv", "_csrf"}.issubset(form.fields):
         raise ValueError("HJKS public CSV form is missing expected fields")
     url = urljoin(SOURCE, form.action)
     if urlsplit(url).hostname != urlsplit(SOURCE).hostname:
         raise ValueError("unexpected HJKS CSV download host")
-    return url, urlencode({**form.fields, "csv": "csv"}).encode()
-
-
-def download():
-    if os.name == "nt":
-        # Use Windows' native HTTPS client and trust store on the Windows runner.
-        curl = str(Path(os.environ["SystemRoot"]) / "System32" / "curl.exe")
-        options = [curl, "--fail", "--silent", "--show-error", "--max-time", "35"]
-        with TemporaryDirectory() as directory:
-            cookies = str(Path(directory) / "cookies")
-            page = subprocess.run(
-                [*options, "--cookie-jar", cookies, SOURCE], check=True, stdout=subprocess.PIPE,
-            ).stdout
-            url, body = export_request(page)
-            raw = subprocess.run(
-                [*options, "--cookie", cookies, "--referer", SOURCE,
-                 "--header", "Content-Type: application/x-www-form-urlencoded",
-                 "--data-binary", "@-", url],
-                input=body, check=True, stdout=subprocess.PIPE,
-            ).stdout
-        return raw.decode("cp932")
-
-    opener = build_opener(HTTPCookieProcessor(CookieJar()))
-    with opener.open(SOURCE, timeout=25) as response:
-        url, body = export_request(response.read())
-    request = Request(url, data=body, headers={"Referer": SOURCE})
+    request = Request(url, data=urlencode({**form.fields, "csv": "csv"}).encode(), headers={"Referer": SOURCE})
     with opener.open(request, timeout=35) as response:
         if response.headers.get_content_type() != "text/csv":
             raise ValueError("HJKS public download did not return a CSV")
@@ -91,8 +67,8 @@ def calendar_date(value):
     return date.fromisoformat(value.strip()[:10].replace("/", "-"))
 
 
-def collect(now):
-    reader = csv.DictReader(io.StringIO(download()))
+def collect(now, content):
+    reader = csv.DictReader(io.StringIO(content))
     if not set(COLUMNS.values()).issubset(reader.fieldnames or []):
         raise ValueError("HJKS official CSV has an unexpected header")
     target_days = (now.date(), now.date() + timedelta(days=1))
@@ -133,7 +109,11 @@ def collect(now):
 
 
 if __name__ == "__main__":
-    result = collect(datetime.now(JST))
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--csv", type=Path, help="Official CSV downloaded in a browser")
+    args = parser.parse_args()
+    content = args.csv.read_bytes().decode("cp932") if args.csv else download()
+    result = collect(datetime.now(JST), content)
     output = Path("data/hjks/latest.json")
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
