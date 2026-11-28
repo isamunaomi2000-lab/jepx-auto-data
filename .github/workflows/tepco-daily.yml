@@ -5,6 +5,7 @@ on:
   push:
     branches: [main]
     paths:
+      - 'scripts/push_data.sh'
       - '.github/workflows/tepco-daily.yml'
       - 'scripts/fetch_tepco.py'
   schedule:
@@ -43,8 +44,7 @@ jobs:
           git add data/tepco/
           if ! git diff --cached --quiet; then
             git commit -m "Update TEPCO forecast data"
-            git pull --rebase
-            git push
+            bash scripts/push_data.sh
           fi
       - name: Report TEPCO source failures
         if: steps.download.outcome == 'failure'

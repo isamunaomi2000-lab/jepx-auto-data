@@ -6,6 +6,7 @@ on:
   push:
     branches: [main]
     paths:
+      - 'scripts/push_data.sh'
       - '.github/workflows/jepx-daily.yml'
       - 'scripts/fetch_jepx.py'
   schedule:
@@ -36,6 +37,5 @@ jobs:
           git add data/latest.json data/daily_summary.json
           if ! git diff --cached --quiet; then
             git commit -m "Update verified JEPX data"
-            git pull --rebase
-            git push
+            bash scripts/push_data.sh
           fi
